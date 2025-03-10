@@ -5,45 +5,145 @@ import {
   Image,
   TouchableHighlight,
   TouchableOpacity,
+  Pressable,
 } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { Ionicons } from "@expo/vector-icons";
-
-const CommunityChatItem = ({ navigation }: { navigation: any }) => {
+import { formatDateTime, GET_ID, URL_IMAGE } from "@/app/api/APIService";
+import { useApp } from "@/app/context/AppContext";
+import { limitString } from "./PersonalChatItem";
+const isValidString = (str: string | null): boolean => {
+  return !!str && str.trim().length > 0;
+};
+const CommunityChatItem = ({
+  navigation,
+  data,
+}: {
+  navigation: any;
+  data: any;
+}) => {
   const [loaded, error] = useFonts({
     Sacramento: require("../assets/fonts/Sacramento.otf"),
     OpenSans: require("../assets/fonts/OpenSans-Regular.ttf"),
   });
+  const [lastMessage, setLastMessage] = useState<any>(null);
+  const [conversationName, setConversationName] = useState("");
+  const {
+    userId,
+    isConnected,
+    listFriendOnline,
+    send,
+    subscribeToChannel,
+    setListFriendOnline,
+  } = useApp();
+  const [online, setOnline] = useState(false);
+
   useEffect(() => {
     if (loaded || error) {
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
+  useEffect(() => {
+    setLastMessage(data.lastMessage);
+    let result = data.conversationMembers
+      .filter((member: any) => !member.isOut)
+      .map((member: any) => {
+        // if (member.user.userId != userId && member.user.isOnline == true) {
+        //   setListFriendOnline((prev) => {
+        //     const newSet = new Set(prev);
+        //     newSet.add(member.user.userId);
+        //     return Array.from(newSet);
+        //   });
+        // }
 
+        return member.user.fullName;
+      });
+    if (data.conversationName == null) {
+      result = result.join(",");
+    } else {
+      result = data.conversationName;
+    }
+    setConversationName(result);
+  }, [data, userId]);
+  useEffect(() => {
+    if (isConnected) {
+      const handleSubscription = (msg: any) => {
+        const message = JSON.parse(msg.body);
+        setLastMessage(message);
+        console.log("message", message);
+      };
+      const subscription = subscribeToChannel(
+        `/queue/conversation/${data.conversationId}`,
+        handleSubscription
+      );
+
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
+    }
+  }, [data, isConnected]);
+  useEffect(() => {
+    setOnline(
+      data.conversationMembers.some((member: any) =>
+        listFriendOnline.includes(member.user.userId)
+      )
+    );
+  }, [listFriendOnline]);
   if (!loaded && !error) {
     return null;
   }
   return (
-    <TouchableOpacity
+    <Pressable
+      android_ripple={{ color: "#444444", borderless: false }}
       style={styles.container}
-      onPress={() => navigation.navigate("CommunityChat")}
+      onPress={() =>
+        navigation.navigate("CommunityChat", {
+          conversationId: data.conversationId,
+        })
+      }
     >
-      <View style={styles.img}>
-        <Image source={require("../assets/images/img_chat2.png")} />
+      <View
+        style={{
+          width: 60,
+          height: 60,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Image
+          source={{
+            uri: URL_IMAGE + (data.avatar ? data.avatar : "default.png"),
+          }}
+          style={styles.img}
+        />
+        {online && <View style={styles.viewOnline} />}
       </View>
       <View style={styles.contentChat}>
         <View style={styles.headerChat}>
-          <Text style={styles.title}>Space House</Text>
+          <Text style={styles.title}>{limitString(conversationName, 18)}</Text>
           <View style={styles.countPerson}>
-            <Ionicons name="person" size={12} color="white" />
-            <Text style={styles.timeMessage}>71/100</Text>
+            {/* <Ionicons name="person" size={12} color="white" /> */}
+            <Text style={styles.timeMessage}>
+              {lastMessage && formatDateTime(lastMessage.createdAt)}
+            </Text>
           </View>
         </View>
-        <Text style={styles.message}>Let’s meet on 7am today and...</Text>
+        <Text style={styles.message}>
+          {lastMessage
+            ? lastMessage.senderMember.user.userId == userId
+              ? `Bạn: ${limitString(lastMessage.content, 22)}`
+              : `${lastMessage.senderMember.user.fullName}: ${limitString(
+                  lastMessage.content,
+                  22
+                )}`
+            : "Giờ các bạn có thể nhắn với nhau"}
+        </Text>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -51,8 +151,7 @@ export default CommunityChatItem;
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    height: "100%",
+    height: "auto",
     maxHeight: 80,
     paddingVertical: 10,
     paddingHorizontal: 10,
@@ -60,15 +159,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   img: {
-    width: "100%",
-    height: "100%",
-    maxWidth: 60,
-    maxHeight: 60,
+    width: 60,
+    height: 60,
     borderWidth: 1,
-    borderRadius: "50%",
-    borderColor: "white",
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 50,
+  },
+  viewOnline: {
+    width: 12,
+    height: 12,
+    borderRadius: 50,
+    backgroundColor: "#00d100",
+    position: "absolute",
+    bottom: 0,
+    right: 5,
+  },
+  viewOffline: {
+    width: 12,
+    height: 12,
+    borderRadius: 50,
+    backgroundColor: "#bebebe",
+    position: "absolute",
+    bottom: 0,
+    right: 5,
   },
   contentChat: {
     flex: 1,

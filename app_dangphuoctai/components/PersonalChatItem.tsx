@@ -1,38 +1,132 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
-import React, { useEffect } from "react";
-import { useFonts } from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  TouchableNativeFeedback,
+  Pressable,
+} from "react-native";
+import React, { useEffect, useState } from "react";
+import { formatDateTime, GET_ID, URL_IMAGE } from "@/app/api/APIService";
+import { useApp } from "@/app/context/AppContext";
+export interface ConversationMember {
+  conversationMemberId: string;
+  isOut: boolean;
+  role: string;
+  user: any;
+}
+export function limitString(str: string, maxLength: number) {
+  return str.length > maxLength ? str.substring(0, maxLength) + "..." : str;
+}
+const PersonalChatItem = ({
+  navigation,
+  data,
+}: {
+  navigation: any;
+  data: any;
+}) => {
+  const [conversationMember, setConversationMember] =
+    useState<ConversationMember>({
+      conversationMemberId: "",
+      isOut: false,
+      role: "",
+      user: {},
+    });
+  const [lastMessage, setLastMessage] = useState<any>(null);
+  const [online, setOnline] = useState(false);
+  const {
+    userId,
+    isConnected,
+    listFriendOnline,
+    subscribeToChannel,
+    setListFriendOnline,
+  } = useApp();
 
-const PersonalChatItem = ({ navigation }: { navigation: any }) => {
-  const [loaded, error] = useFonts({
-    Sacramento: require("../assets/fonts/Sacramento.otf"),
-    OpenSans: require("../assets/fonts/OpenSans-Regular.ttf"),
-  });
   useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded, error]);
+    setLastMessage(data.lastMessage);
 
-  if (!loaded && !error) {
-    return null;
-  }
+    const member = data.conversationMembers.find(
+      (m: any) => m.user.userId != userId
+    );
+    if (member) {
+      // if (member.user.isOnline == true) {
+      //   setListFriendOnline((prev) => {
+      //     const newSet = new Set(prev);
+      //     newSet.add(member.user.userId);
+      //     return Array.from(newSet);
+      //   });
+      // }
+      setConversationMember(member);
+      // console.log("member", member);
+      // console.log("image", URL_IMAGE + member.user.avatar);
+    }
+  }, [data, userId]);
+  useEffect(() => {}, [listFriendOnline]);
+  useEffect(() => {
+    if (isConnected) {
+      const handleSubscription = (msg: any) => {
+        const message = JSON.parse(msg.body);
+        setLastMessage(message);
+        console.log("message", message);
+      };
+      const subscription = subscribeToChannel(
+        `/queue/conversation/${data.conversationId}`,
+        handleSubscription
+      );
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
+    }
+  }, [data, isConnected]);
+
   return (
-    <TouchableOpacity
+    <Pressable
+      android_ripple={{ color: "#444444", borderless: false }}
       style={styles.container}
-      onPress={() => navigation.navigate("PersonalChat")}
+      onPress={() =>
+        navigation.navigate("PersonalChat", {
+          conversationId: data.conversationId,
+        })
+      }
     >
-      <View style={styles.img}>
-        <Image source={require("../assets/images/img_chat.png")} />
+      <View
+        style={{
+          width: 60,
+          height: 60,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Image
+          source={{ uri: URL_IMAGE + conversationMember.user.avatar }}
+          style={styles.img}
+        />
+        {listFriendOnline.includes(conversationMember.user.userId) && (
+          <View style={styles.viewOnline} />
+        )}
       </View>
       <View style={styles.contentChat}>
         <View style={styles.headerChat}>
-          <Text style={styles.title}>Nancy Jack</Text>
-          <Text style={styles.timeMessage}>01:23 pm</Text>
+          <Text style={styles.title}>{conversationMember.user.fullName}</Text>
+          <Text style={styles.timeMessage}>
+            {lastMessage && formatDateTime(lastMessage.createdAt)}
+          </Text>
         </View>
-        <Text style={styles.message}>Hey, How are you?</Text>
+        <Text style={styles.message}>
+          {lastMessage
+            ? lastMessage.senderMember.user.userId == userId
+              ? `Bạn: ${limitString(lastMessage.content, 22)}`
+              : `${lastMessage.senderMember.user.fullName}: ${limitString(
+                  lastMessage.content,
+                  22
+                )}`
+            : "Giờ các bạn có thể nhắn với nhau"}
+        </Text>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -40,8 +134,8 @@ export default PersonalChatItem;
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    height: "100%",
+    width: "auto",
+    height: "auto",
     maxHeight: 80,
     paddingVertical: 10,
     paddingHorizontal: 10,
@@ -49,15 +143,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   img: {
-    width: "100%",
-    height: "100%",
-    maxWidth: 60,
-    maxHeight: 60,
+    width: 60,
+    height: 60,
     borderWidth: 1,
-    borderRadius: "50%",
-    borderColor: "white",
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 50,
+  },
+  viewOnline: {
+    width: 12,
+    height: 12,
+    borderRadius: 50,
+    backgroundColor: "#00d100",
+    position: "absolute",
+    bottom: 0,
+    right: 5,
+  },
+  viewOffline: {
+    width: 12,
+    height: 12,
+    borderRadius: 50,
+    backgroundColor: "#bebebe",
+    position: "absolute",
+    bottom: 0,
+    right: 5,
   },
   contentChat: {
     flex: 1,
@@ -73,19 +180,16 @@ const styles = StyleSheet.create({
   title: {
     color: "white",
     fontSize: 17,
-    fontFamily: "OpenSans",
     fontWeight: "semibold",
   },
   message: {
     color: "#ACB3BF",
     fontSize: 12,
-    fontFamily: "OpenSans",
     fontWeight: "semibold",
   },
   timeMessage: {
     color: "#ACB3BF",
     fontSize: 12,
-    fontFamily: "OpenSans",
     fontWeight: "semibold",
   },
 });

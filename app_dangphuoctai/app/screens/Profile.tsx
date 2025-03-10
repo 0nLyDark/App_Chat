@@ -9,11 +9,38 @@ import {
   TouchableNativeFeedback,
   TouchableHighlight,
 } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GET_ID, URL_IMAGE } from "../api/APIService";
+import { useApp } from "../context/AppContext";
 
 const Profile = ({ navigation }: { navigation: any }) => {
+  const { listFriendOnline, disconnect, setUserId, setListFriendOnline } =
+    useApp();
+  const [fullName, setFullName] = useState("");
+  const [avatar, setAvatar] = useState("");
+  useEffect(() => {
+    const fetchUserIdAndData = async () => {
+      const userId = (await AsyncStorage.getItem("userId")) ?? 0;
+      GET_ID("public/users", userId)
+        .then((response) => {
+          setAvatar(response.data.avatar);
+          setFullName(response.data.fullName);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    };
+    fetchUserIdAndData();
+  }, []);
+  const Logout = () => {
+    disconnect();
+    setUserId(null);
+    AsyncStorage.removeItem("jwt-token");
+    navigation.navigate("SignIn");
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -32,7 +59,7 @@ const Profile = ({ navigation }: { navigation: any }) => {
           </View>
         </View>
         <View style={styles.viewHeaderCenter}>
-          <Text style={styles.txtHeader}>Profile</Text>
+          <Text style={styles.txtHeader}>Hồ sơ</Text>
         </View>
         <View style={[styles.viewHeader, { alignItems: "flex-end" }]}>
           <TouchableOpacity
@@ -47,80 +74,78 @@ const Profile = ({ navigation }: { navigation: any }) => {
           </TouchableOpacity>
         </View>
       </View>
-      <ScrollView>
-        <View style={styles.content}>
-          <View style={styles.info}>
-            <View style={styles.avatar}>
-              <Image source={require("../../assets/images/avatar.png")} />
-            </View>
-            <Text style={styles.fullname}>Piyush Gupta</Text>
-            <Text style={styles.name}>piyushgupta092</Text>
-            <View></View>
-            <ImageBackground
-              source={require("../../assets/images/bg_profile.png")}
-              resizeMode="cover"
-              style={styles.bgstory}
-              imageStyle={{ borderRadius: 10 }}
-            >
-              <View style={styles.story}>
-                <Text style={styles.txtstory}>Engineer by profession</Text>
-                <Text style={styles.txtstory}>Talk about Bussiness, Tech</Text>
-                <Text style={styles.txtstory}>I’m a nightowl 🦉</Text>
-              </View>
-            </ImageBackground>
-            <View style={styles.ortherApp}>
-              <TouchableOpacity style={styles.iconApp}>
-                <Image source={require("../../assets/images/Facebook.png")} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconApp}>
-                <Image source={require("../../assets/images/Telegram.png")} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconApp}>
-                <Image source={require("../../assets/images/Twitter.png")} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconApp}>
-                <Image source={require("../../assets/images/Instagram.png")} />
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={styles.btnEdit}
-              onPress={() => navigation.navigate("EditProfile")}
-            >
-              <Text style={styles.txtEdit}>Edit Profile</Text>
-            </TouchableOpacity>
-            <View style={styles.footer}>
-              <TouchableOpacity>
-                <Text style={styles.txtfooter}>Inbox cleaner</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.txtfooter}>Manage Blocking</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.txtfooter}>Notifications</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.txtfooter}>Share profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.txtfooter}>Invite friends</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnAdd}>
-                <View style={styles.iconAdd}>
-                  <Ionicons name="add" size={22} color="#29B6F6" />
-                </View>
-                <Text style={[styles.txtfooter, { marginBottom: 0 }]}>
-                  Add Account
-                </Text>
-              </TouchableOpacity>
-            </View>
+      <ScrollView style={styles.content}>
+        {/* <View style={styles.info}> */}
+        <View style={styles.avatar}>
+          <Image
+            style={styles.imgAvatar}
+            source={{ uri: URL_IMAGE + avatar }}
+          />
+        </View>
+        <Text style={styles.fullname}>{fullName}</Text>
+        <Text style={styles.name}>piyushgupta092</Text>
+        <View></View>
+        <ImageBackground
+          source={require("../../assets/images/bg_profile.png")}
+          resizeMode="cover"
+          style={styles.bgstory}
+          imageStyle={{ borderRadius: 10 }}
+        >
+          <View style={styles.story}>
+            <Text style={styles.txtstory}>Kỹ sư theo nghề nghiệp</Text>
+            <Text style={styles.txtstory}>Nói về Kinh doanh, Công nghệ</Text>
+            <Text style={styles.txtstory}>Tôi là cú đêm 🦉</Text>
           </View>
+        </ImageBackground>
+        <View style={styles.ortherApp}>
+          <TouchableOpacity style={styles.iconApp}>
+            <Image source={require("../../assets/images/Facebook.png")} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconApp}>
+            <Image source={require("../../assets/images/Telegram.png")} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconApp}>
+            <Image source={require("../../assets/images/Twitter.png")} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconApp}>
+            <Image source={require("../../assets/images/Instagram.png")} />
+          </TouchableOpacity>
         </View>
         <TouchableOpacity
-          style={styles.btnLogout}
-          onPress={() => navigation.navigate("SignIn")}
+          style={styles.btnEdit}
+          onPress={() => navigation.navigate("EditProfile")}
         >
-          <Text style={styles.txtLogout}>Logout</Text>
+          <Text style={styles.txtEdit}>Sửa hồ sơ</Text>
         </TouchableOpacity>
+        <View style={styles.footer}>
+          <TouchableOpacity>
+            <Text style={styles.txtfooter}>Trình dọn dẹp hộp thư đến</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles.txtfooter}>Quản lý chặn</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles.txtfooter}>Thông báo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles.txtfooter}>Chia sẻ hồ sơ</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text style={styles.txtfooter}>Mời bạn bè</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.btnAdd}>
+            <View style={styles.iconAdd}>
+              <Ionicons name="add" size={22} color="#29B6F6" />
+            </View>
+            <Text style={[styles.txtfooter, { marginBottom: 0 }]}>
+              Thêm tài khoản
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={styles.btnLogout} onPress={Logout}>
+          <Text style={styles.txtLogout}>Đăng xuất</Text>
+        </TouchableOpacity>
+        {/* </View> */}
       </ScrollView>
     </View>
   );
@@ -177,11 +202,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingVertical: 5,
-    paddingHorizontal: 20,
   },
   info: {
-    width: "100%",
     maxWidth: 325,
     alignItems: "center",
     marginHorizontal: "auto",
@@ -189,38 +211,45 @@ const styles = StyleSheet.create({
   avatar: {
     width: "100%",
     height: "100%",
-    maxWidth: 125,
-    maxHeight: 125,
-    borderWidth: 1,
-    borderColor: "white",
-    borderRadius: "50%",
+    maxWidth: 175,
+    maxHeight: 175,
     alignItems: "center",
     justifyContent: "center",
+    marginHorizontal: "auto",
+  },
+  imgAvatar: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 5,
+    borderColor: "pink",
   },
   fullname: {
     color: "white",
     fontSize: 20,
-    fontWeight: "semibold",
-    fontFamily: "OpenSans",
+    textAlign: "center",
   },
   name: {
     color: "#E2E2E2",
     fontSize: 12,
     fontWeight: "semibold",
     fontFamily: "OpenSans",
+    textAlign: "center",
   },
   bgstory: {
-    width: "100%",
+    flex: 1,
     maxWidth: 325,
-    height: 115,
     borderRadius: 10,
     marginVertical: 15,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 10,
+    marginHorizontal: "auto",
+    borderWidth: 1,
+    borderColor: "pink",
   },
   story: {
     width: "100%",
-    maxWidth: 300,
+    height: "100%",
+    maxWidth: 275,
     paddingVertical: 10,
     paddingHorizontal: 15,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -237,6 +266,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     columnGap: 4,
+    marginHorizontal: "auto",
   },
   iconApp: {
     width: 35,
@@ -251,6 +281,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginVertical: 20,
+    marginHorizontal: "auto",
   },
   txtEdit: {
     color: "white",
@@ -292,17 +323,19 @@ const styles = StyleSheet.create({
   },
   btnLogout: {
     width: "100%",
-    height: "100%",
+    maxWidth: 200,
     maxHeight: 43,
     backgroundColor: "#EA4335",
-    borderTopLeftRadius: 50, // Bo góc bên trái
-    borderTopRightRadius: 50, // Bo góc bên phải
-    borderBottomLeftRadius: 0, // Không bo góc ở đáy
-    borderBottomRightRadius: 0,
+    borderRadius: 50,
+    // borderTopLeftRadius: 50, // Bo góc bên trái
+    // borderTopRightRadius: 50, // Bo góc bên phải
+    // borderBottomLeftRadius: 0, // Không bo góc ở đáy
+    // borderBottomRightRadius: 0,
     justifyContent: "center",
     alignItems: "center",
     padding: 10,
     marginTop: 20,
+    marginBottom: 50,
     marginHorizontal: "auto",
   },
   txtLogout: {

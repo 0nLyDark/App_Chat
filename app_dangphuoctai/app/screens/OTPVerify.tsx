@@ -5,43 +5,64 @@ import {
   View,
   Image,
   TouchableOpacity,
+  Button,
 } from "react-native";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
+import { CodeField, Cursor } from "react-native-confirmation-code-field";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GET_ID, POST_ADD } from "../api/APIService";
 
-const OTPVerify = ({ navigation }: { navigation: any }) => {
-  const emailOtpRefs = useRef([]);
-  const mobileOtpRefs = useRef([]);
+const OTPVerify = ({ route, navigation }: { route: any; navigation: any }) => {
+  const [otpEmail, setOtpEmail] = useState("");
+  const [otpPhone, setOtpPhone] = useState("");
+  const { type, email } = route.params;
 
-  const handleInputChange = (
-    text: string | any[],
-    index: number,
-    refs: any[]
-  ) => {
-    if (text.length === 0 && refs.length > index && index > 0) {
-      // Focus vào ô tiếp theo
-      refs[index - 1].focus();
-    }
-    if (text.length === 1 && index < refs.length - 1) {
-      // Focus vào ô tiếp theo
-      refs[index + 1].focus();
-    }
+  const getOTPEmail = () => {
+    GET_ID("/register/email", email)
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
+  // if (type == "register") {
+  //   getOTPEmail();
+  // }
+  const sendOTPEmail = () => {
+    const data = {
+      email: email,
+      codeOTP: otpEmail,
+    };
+    // navigation.navigate("ResetPassword", {});
 
-  const renderOTPInput = (refs: any[]) => {
-    return (
-      <View style={styles.otpContainer}>
-        {[...Array(5)].map((_, index) => (
-          <TextInput
-            key={index}
-            style={styles.input}
-            maxLength={1}
-            keyboardType="number-pad"
-            onChangeText={(text) => handleInputChange(text, index, refs)}
-            ref={(el) => (refs[index] = el)} // Gắn ref cho từng ô
-          />
-        ))}
-      </View>
-    );
+    POST_ADD(`otp/verity/${type}`, data)
+      .then(async (response) => {
+        console.log(response);
+        if (response.data["jwt-token"]) {
+          await AsyncStorage.setItem("jwt-token", response.data["jwt-token"]);
+          if (type == "register") {
+            GET_ID("public/users/email", "token")
+              .then((data: any) => {
+                console.log(data);
+                AsyncStorage.setItem("userId", data.userId);
+                AsyncStorage.setItem("email", data.email);
+                alert("Đăng ký thành công");
+                navigation.navigate("Home");
+              })
+              .catch((error) => {
+                alert("Xảy ra lỗi đăng nhập");
+                console.log(error);
+              });
+          } else if (type == "forgotPassword") {
+            navigation.navigate("ResetPassword", {});
+          }
+        }
+      })
+      .catch((error) => {
+        alert("Mã xác thực không hợp lệ!");
+        console.log(error);
+      });
   };
   return (
     <View style={styles.container}>
@@ -50,23 +71,57 @@ const OTPVerify = ({ navigation }: { navigation: any }) => {
         source={require("../../assets/images/img_login.png")}
       />
       <View>
-        <Text style={[styles.txt, styles.txt1]}>Verification</Text>
+        <Text style={[styles.txt, styles.txt1]}>Xác minh</Text>
         <Text style={[styles.txt, styles.txt2]}>
-          Messenger has send a code to verify your account
+          Messenger đã gửi mã để xác minh tài khoản của bạn
         </Text>
         <View style={styles.form}>
           <Text style={styles.label}>Email OTP</Text>
-          {renderOTPInput(emailOtpRefs.current)}
-
+          <View style={styles.otpContainer}>
+            <CodeField
+              value={otpEmail}
+              onChangeText={setOtpEmail}
+              cellCount={5}
+              rootStyle={styles.otpInput}
+              keyboardType="number-pad"
+              textContentType="oneTimeCode"
+              renderCell={({ index, symbol, isFocused }) => (
+                <View
+                  key={index}
+                  style={[styles.cell, isFocused && styles.focusedCell]}
+                >
+                  <Text style={styles.text}>
+                    {symbol || (isFocused ? <Cursor /> : null)}
+                  </Text>
+                </View>
+              )}
+            />
+          </View>
           <Text style={styles.label}>Mobile OTP</Text>
-          {renderOTPInput(mobileOtpRefs.current)}
+          <View style={styles.otpContainer}>
+            <CodeField
+              value={otpPhone}
+              onChangeText={setOtpPhone}
+              cellCount={5}
+              rootStyle={styles.otpInput}
+              keyboardType="number-pad"
+              textContentType="oneTimeCode"
+              renderCell={({ index, symbol, isFocused }) => (
+                <View
+                  key={index}
+                  style={[styles.cell, isFocused && styles.focusedCell]}
+                >
+                  <Text style={styles.text}>
+                    {symbol || (isFocused ? <Cursor /> : null)}
+                  </Text>
+                </View>
+              )}
+            />
+          </View>
         </View>
         <View style={styles.formbtn}>
-          <TouchableOpacity
-            style={styles.btnlogin}
-            onPress={() => navigation.navigate("Home")}
-          >
-            <Text style={styles.txtlogin}>Verify</Text>
+          <TouchableOpacity style={styles.btnlogin} onPress={sendOTPEmail}>
+            <Text style={styles.txtlogin}>Xác thực</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -166,5 +221,28 @@ const styles = StyleSheet.create({
     color: "white",
     margin: "auto",
     textAlign: "center",
+  },
+  otpInput: {
+    width: "100%",
+    height: 40,
+    borderRadius: 10,
+  },
+  cell: {
+    width: 40,
+    height: 40,
+    borderWidth: 2,
+    borderColor: "white",
+    backgroundColor: "white",
+    borderRadius: 5,
+    textAlign: "center",
+    marginHorizontal: "auto",
+  },
+  focusedCell: {
+    borderColor: "#007AFF",
+  },
+  text: {
+    textAlign: "center",
+    fontSize: 24,
+    fontWeight: "bold",
   },
 });
