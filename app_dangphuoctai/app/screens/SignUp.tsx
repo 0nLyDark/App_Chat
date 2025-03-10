@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TouchableOpacity,
   StyleSheet,
@@ -9,11 +9,31 @@ import {
   ImageBackground,
   Image,
 } from "react-native";
+import { POST_ADD } from "../api/APIService";
 const SignUp = ({ navigation }: { navigation: any }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+
+  const handleRegister = () => {
+    const data = {
+      username: username,
+      password: password,
+      email: email,
+      fullName: fullName,
+    };
+    POST_ADD("register", data)
+      .then((res) => {
+        console.log(res);
+        navigation.navigate("OTPVerify", { type: "register", email: email });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
   return (
     <ScrollView style={styles.scrollView}>
       <View style={styles.container}>
@@ -22,10 +42,10 @@ const SignUp = ({ navigation }: { navigation: any }) => {
           source={require("../../assets/images/img_login.png")}
         />
         <View>
-          <Text style={[styles.txt, styles.txt1]}>Register</Text>
-          <Text style={[styles.txt, styles.txt2]}>Create a new account</Text>
+          <Text style={[styles.txt, styles.txt1]}>Đăng ký</Text>
+          <Text style={[styles.txt, styles.txt2]}>Tạo một tài khoản mới</Text>
           <View style={styles.form}>
-            <Text style={styles.label}>Username</Text>
+            <Text style={styles.label}>Tên đăng nhập</Text>
             <TextInput
               style={styles.txin}
               placeholder="Username"
@@ -39,14 +59,21 @@ const SignUp = ({ navigation }: { navigation: any }) => {
               value={email}
               onChangeText={setEmail}
             />
-            <Text style={styles.label}>Mobie Number</Text>
+            <Text style={styles.label}>Fullname</Text>
+            <TextInput
+              style={styles.txin}
+              placeholder="Fullname"
+              value={fullName}
+              onChangeText={setFullName}
+            />
+            <Text style={styles.label}>Số điện thoại</Text>
             <TextInput
               style={styles.txin}
               placeholder="Phone"
               value={phone}
               onChangeText={setPhone}
             />
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>Mật khẩu</Text>
             <TextInput
               style={styles.txin}
               placeholder="Password"
@@ -56,18 +83,15 @@ const SignUp = ({ navigation }: { navigation: any }) => {
             />
           </View>
           <View style={styles.formbtn}>
-            <TouchableOpacity
-              style={styles.btnlogin}
-              onPress={() => navigation.navigate("Home")}
-            >
-              <Text style={styles.txtlogin}>Login</Text>
+            <TouchableOpacity style={styles.btnlogin} onPress={handleRegister}>
+              <Text style={styles.txtlogin}>Đăng ký</Text>
             </TouchableOpacity>
             <Text
               style={styles.txtcreate}
               onPress={() => navigation.navigate("SignIn")}
             >
-              Already have account?{"  "}
-              <Text style={styles.btncreate}>Login</Text>
+              Đã có tài khoản?{"  "}
+              <Text style={styles.btncreate}>Đăng Nhập</Text>
             </Text>
           </View>
         </View>

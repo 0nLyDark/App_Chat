@@ -20,9 +20,9 @@ const Setting = ({ navigation }: { navigation: any }) => {
           </View>
         </View>
         <View style={styles.viewHeaderCenter}>
-          <Text style={styles.txtHeader}>Setting</Text>
+          <Text style={styles.txtHeader}>Cài đặt</Text>
         </View>
-        <View style={[styles.viewHeader, { alignItems: "flex-end" }]}>
+        <View style={[styles.viewHeader]}>
           <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
             <Ionicons name="chevron-forward" size={20} color="#70CEF9" />
           </TouchableOpacity>
@@ -30,32 +30,38 @@ const Setting = ({ navigation }: { navigation: any }) => {
       </View>
       <View style={styles.content}>
         <TouchableOpacity>
-          <Text style={styles.txt}>Account information</Text>
+          <Text style={styles.txt}>Thông tin tài khoản
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.txt}>Personal information</Text>
+          <Text style={styles.txt}>Thông tin cá nhân
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.txt}>Account Management</Text>
+          <Text style={styles.txt}>Quản lý tài khoản
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.txt}>Privacy & Data</Text>
+          <Text style={styles.txt}>Quyền riêng tư & Dữ liệu</Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.txt}>Security and logins</Text>
+          <Text style={styles.txt}>Bảo mật và đăng nhập
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.txt}>Support</Text>
+          <Text style={styles.txt}>Hỗ trợ</Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.txt}>Get help</Text>
+          <Text style={styles.txt}>Nhận trợ giúp
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.txt}>Terms & Policy</Text>
+          <Text style={styles.txt}>Điều khoản & Chính sách
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity>
+        {/* <TouchableOpacity>
           <Text style={styles.txt}>About</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

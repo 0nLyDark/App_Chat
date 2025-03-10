@@ -9,15 +9,18 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch", "remote-notification"]
+      }
     },
-    "permissions": ["CAMERA", "AUDIO_RECORDING"],
+    "permissions": ["CAMERA", "AUDIO_RECORDING", "NOTIFICATIONS"],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["RECORD_AUDIO"]
+      "permissions": ["NOTIFICATIONS", "RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",

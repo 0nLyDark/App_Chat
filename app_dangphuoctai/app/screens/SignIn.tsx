@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TouchableOpacity,
   StyleSheet,
@@ -10,31 +10,53 @@ import {
   TextInput,
   ImageBackground,
   Image,
+  ScrollView,
 } from "react-native";
+import { POST_LOGIN } from "../api/APIService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useApp } from "../context/AppContext";
+import { toast } from "./EditProfile";
 const image = { uri: "assets/images/img_login.png" };
 
 const SignIn = ({ navigation }: { navigation: any }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const { listFriendOnline, setUserId } = useApp();
+  const handleLogin = async () => {
+    const data = {
+      username: username,
+      password: password,
+    };
+    const result = await POST_LOGIN(data);
+    if (result) {
+      const id = await AsyncStorage.getItem("userId");
+      setUserId(id);
+      toast("Đăng nhập thành công", "short");
+      navigation.navigate("Home");
+    }
+  };
 
   return (
+    // <ScrollView>
     <View style={styles.container}>
       <Image
         style={styles.bgTop}
         source={require("../../assets/images/img_login.png")}
       />
       <View>
-        <Text style={[styles.txt, styles.txt1]}>Welecome</Text>
-        <Text style={[styles.txt, styles.txt2]}>Login to your account</Text>
+        <Text style={[styles.txt, styles.txt1]}>Chào mừng</Text>
+        <Text style={[styles.txt, styles.txt2]}>
+          Đăng nhập vào tài khoản của bạn
+        </Text>
         <View style={styles.form}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>Tên đăng nhập</Text>
           <TextInput
             style={styles.txin}
-            placeholder="Email"
+            placeholder="Username"
             value={username}
             onChangeText={setUsername}
           />
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>Mật khẩu</Text>
           <TextInput
             style={styles.txin}
             placeholder="Password"
@@ -46,25 +68,44 @@ const SignIn = ({ navigation }: { navigation: any }) => {
             style={styles.fgPass}
             onPress={() => navigation.navigate("ForgotPassword")}
           >
-            Forgot Password?
+            Quên mật khẩu?
           </Text>
         </View>
         <View style={styles.formbtn}>
-          <TouchableOpacity
-            style={styles.btnlogin}
-            onPress={() => navigation.navigate("Home")}
-          >
-            <Text style={styles.txtlogin}>Login</Text>
+          <TouchableOpacity style={styles.btnlogin} onPress={handleLogin}>
+            <Text style={styles.txtlogin}>Đăng nhập</Text>
           </TouchableOpacity>
           <Text
             style={styles.txtcreate}
             onPress={() => navigation.navigate("SignUp")}
           >
-            Don't have account? <Text style={styles.btncreate}>Create Now</Text>
+            Bạn chưa có tài khoản?
+            <Text style={styles.btncreate}>Tạo ngay bây giờ</Text>
           </Text>
+        </View>
+        <View style={styles.iconLogin}>
+          <TouchableOpacity>
+            <Image
+              style={styles.iconApp}
+              source={require("../../assets/images/icon_google.png")}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Image
+              style={styles.iconApp}
+              source={require("../../assets/images/icon_facebook.png")}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Image
+              style={styles.iconApp}
+              source={require("../../assets/images/icon_instagram.png")}
+            />
+          </TouchableOpacity>
         </View>
       </View>
     </View>
+    // </ScrollView>
   );
 };
 
@@ -144,5 +185,19 @@ const styles = StyleSheet.create({
   btncreate: {
     color: "white",
     paddingLeft: 5,
+  },
+  iconLogin: {
+    width: "100%",
+    maxWidth: 200,
+    height: "auto",
+    marginHorizontal: "auto",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 40,
+  },
+  iconApp: {
+    width: 30,
+    height: 30,
   },
 });
