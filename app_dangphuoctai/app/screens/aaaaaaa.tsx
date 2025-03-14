@@ -1,41 +1,22 @@
-import { View, Text, Button,Image } from "react-native";
+import { View, Text, Button, Image } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useNavigation } from "expo-router";
-
-import * as ImagePicker from "expo-image-picker";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
+import { POST_LOGIN } from "../api/APIService";
 
 const aaaaaaa = ({ navigation }: { navigation: any }) => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
   useEffect(() => {
     const timer = setTimeout(() => {
       navigation.navigate("SignIn");
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
   return (
     <View>
-      <View style={{ alignItems: "center", marginTop: 20 }}>
-        <Button title="Chọn ảnh từ thư viện" onPress={pickImage} />
-        {selectedImage && (
-          <Image
-            source={{ uri: selectedImage }}
-            style={{ width: 200, height: 200, marginTop: 10 }}
-          />
-        )}
-      </View>
+      <Button title="Login with Google" />
     </View>
   );
 };

@@ -11,13 +11,18 @@ import {
   ImageBackground,
   Image,
   ScrollView,
+  Platform,
 } from "react-native";
 import { POST_LOGIN } from "../api/APIService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useApp } from "../context/AppContext";
 import { toast } from "./EditProfile";
-const image = { uri: "assets/images/img_login.png" };
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import * as AuthSession from "expo-auth-session";
 
+const image = { uri: "assets/images/img_login.png" };
+WebBrowser.maybeCompleteAuthSession();
 const SignIn = ({ navigation }: { navigation: any }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +32,7 @@ const SignIn = ({ navigation }: { navigation: any }) => {
       username: username,
       password: password,
     };
-    const result = await POST_LOGIN(data);
+    const result = await POST_LOGIN(data, "login");
     if (result) {
       const id = await AsyncStorage.getItem("userId");
       setUserId(id);
@@ -35,7 +40,38 @@ const SignIn = ({ navigation }: { navigation: any }) => {
       navigation.navigate("Home");
     }
   };
-
+  const redirectUri = AuthSession.makeRedirectUri();
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId:
+      "1029367171403-qfi80cfb3gmlcd0ngd3q8v7cb0rfnafm.apps.googleusercontent.com",
+    androidClientId:
+      "1029367171403-vr22msiageecjnish0oeed84tl2vevnu.apps.googleusercontent.com",
+    redirectUri: redirectUri,
+    responseType: "id_token", // Quan trọng để lấy thông tin đăng nhập
+    scopes: ["openid", "profile", "email"], // Phạm vi yêu cầu quyền truy cập
+    extraParams: {
+      prompt: "select_account",
+    },
+  });
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { id_token } = response.params;
+      loginGoogle(id_token);
+    }
+  }, [response]);
+  const loginGoogle = async (idToken: string) => {
+    try {
+      const result = await POST_LOGIN({ token: idToken }, "google");
+      if (result) {
+        const id = await AsyncStorage.getItem("userId");
+        setUserId(id);
+        toast("Đăng nhập thành công", "short");
+        navigation.navigate("Home");
+      }
+    } catch (error) {
+      console.error("Error sending token:", error);
+    }
+  };
   return (
     // <ScrollView>
     <View style={styles.container}>
@@ -84,7 +120,7 @@ const SignIn = ({ navigation }: { navigation: any }) => {
           </Text>
         </View>
         <View style={styles.iconLogin}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => promptAsync()}>
             <Image
               style={styles.iconApp}
               source={require("../../assets/images/icon_google.png")}

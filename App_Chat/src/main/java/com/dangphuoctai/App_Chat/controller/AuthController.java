@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +25,11 @@ import com.dangphuoctai.App_Chat.payloads.DTO.UserDTO;
 import com.dangphuoctai.App_Chat.security.JWTUtil;
 import com.dangphuoctai.App_Chat.service.AuthService;
 import com.dangphuoctai.App_Chat.service.EmailService;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,13 +52,42 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Value("${google.client.id}")
+    private String googleClientId;
+
+    @PostMapping("/auth/google")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
+        String googleToken = request.get("token");
+
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+
+        try {
+            GoogleIdToken idToken = verifier.verify(googleToken);
+            if (idToken != null) {
+                String email = idToken.getPayload().getEmail();
+                String name = (String) idToken.getPayload().get("name");
+                String pictureUrl = (String) idToken.getPayload().get("picture");
+                UserDTO userDTO = new UserDTO();
+                userDTO.setEmail(email);
+                userDTO.setFullName(name);
+                userDTO.setAvatar(pictureUrl);
+                userDTO.setLoginType("GOOGLE");
+                userDTO = authService.loginGoogle(userDTO);
+                String token = jwtUtil.generateToken(userDTO);
+                return ResponseEntity.ok(Collections.singletonMap("jwt-token", token));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login failed");
+    }
+
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> registerHandler(@RequestBody User user)
             throws UserNotFoundException {
-
-        String encodedPass = passwordEncoder.encode(user.getPassword());
-
-        user.setPassword(encodedPass);
 
         UserDTO userDTO = authService.registerUser(user);
 
@@ -71,7 +106,7 @@ public class AuthController {
 
     }
 
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public ResponseEntity<Map<String, Object>> loginHandler(@Valid @RequestBody RequestLogin requestLogin) {
 
         UserDTO userDTO = authService.loginUser(requestLogin.getUsername(), requestLogin.getPassword());
@@ -109,8 +144,6 @@ public class AuthController {
                 HttpStatus.OK);
 
     }
-
-    
 
     @PostMapping("/otp/verity/register")
     public ResponseEntity<Map<String, Object>> verityOTPEmailRegister(@RequestBody OtpDTO otpDTO) {

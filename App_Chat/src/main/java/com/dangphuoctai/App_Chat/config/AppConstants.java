@@ -11,7 +11,7 @@ public class AppConstants {
     public static final String SORT_DIR = "asc";
 
     public static final String[] PUBLIC_URLS = { "/v3/api-docs/**", "/swagger-ui/**", "/api/register",
-            "/api/login", "/api/otp/**", "/api/public/users/avatar/**"
+            "/api/auth/**", "/api/otp/**", "/api/public/users/avatar/**"
     };
     public static final String[] USER_URLS = { "/api/public/**",
     };

@@ -186,13 +186,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     listFriendOnlineRef.current = listFriendOnline;
   }, [listFriendOnline]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("online:", listFriendOnlineRef.current);
-    }, 5000);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     console.log("online:", listFriendOnlineRef.current);
+  //   }, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
   const contextValue: AppContextType = {
     // User context
     userId,

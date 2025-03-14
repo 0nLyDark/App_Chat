@@ -1,7 +1,8 @@
 import axios, { AxiosResponse } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const IP_Address = "localhost";
+// export const IP_Address = "localhost";
+export const IP_Address = "192.168.1.5";
 
 export const URL_IMAGE =
   "http://" + IP_Address + ":8080/api/public/users/avatar/";
@@ -97,11 +98,14 @@ export async function PUT_IMG(
     },
   });
 }
-export async function POST_LOGIN(data: any): Promise<boolean> {
+export async function POST_LOGIN(
+  data: any,
+  loginType: string
+): Promise<boolean> {
   try {
     const response = await axios({
       method: "POST",
-      url: `${API_URL}/login`,
+      url: `${API_URL}/auth/${loginType}`,
       data,
     });
     // const response = await callApi("login", "POST", data);

@@ -18,6 +18,7 @@ public class UserDTO {
     private String email;
     private String avatar;
     private Date dateOfBirth;
+    private String loginType;
     private Boolean isOnline;
     private LocalDateTime timeOffline;
     // private String phoneNumber;
