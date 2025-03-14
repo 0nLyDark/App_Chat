@@ -25,6 +25,7 @@
     "app_dangphuoctai": "file:",
     "axios": "^1.7.9",
     "expo": "^52.0.25",
+    "expo-auth-session": "~6.0.3",
     "expo-blur": "~14.0.1",
     "expo-clipboard": "^7.0.1",
     "expo-constants": "~17.0.3",
@@ -40,7 +41,7 @@
     "expo-status-bar": "~2.0.0",
     "expo-symbols": "~0.2.0",
     "expo-system-ui": "~4.0.5",
-    "expo-web-browser": "~14.0.1",
+    "expo-web-browser": "~14.0.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.3",
@@ -51,9 +52,9 @@
     "react-native-screens": "~4.1.0",
     "react-native-tab-view": "^4.0.4",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "^13.12.5",
     "socket.io-client": "^4.8.1",
-    "sockjs-client": "^1.6.1"
+    "sockjs-client": "^1.6.1",
+    "undefined": "expo-auth-session/providers/google"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

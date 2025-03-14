@@ -17,6 +17,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import lombok.Data;
@@ -35,7 +37,7 @@ public class User {
 
     @Column(unique = true, nullable = false)
     private String username;
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
     @Email
     @Column(unique = true, nullable = false)
@@ -50,8 +52,8 @@ public class User {
     private String avatar;
     private String lastName;
     private String firstName;
-
     private Date dateOfBirth;
+    private String loginType;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean enabled;
@@ -72,4 +74,12 @@ public class User {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
+
+    @PrePersist
+    @PreUpdate
+    private void validatePassword() {
+        if (loginType == null && (password == null || password.isBlank())) {
+            throw new IllegalArgumentException("Password cannot be null if loginType is null");
+        }
+    }
 }

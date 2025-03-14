@@ -53,6 +53,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserDTO registerUser(User user) {
         try {
+            if (user.getPassword() == null || user.getPassword().isBlank()) {
+                throw new APIException("Password is not Valid");
+            }
+            String encodedPass = passwordEncoder.encode(user.getPassword());
+            user.setPassword(encodedPass);
             Role role = roleRepo.findById(AppConstants.USER_ID).get();
             user.setRoles(Set.of(role));
             user.setEnabled(false);
@@ -67,6 +72,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserDTO loginUser(String username, String password) {
+        if (password == null) {
+            throw new APIException("Password is not Valid");
+        }
         User user;
         if (username.matches("[a-zA-Z0-9]+@[a-zA-Z0-9.]+")) {
             user = userRepo.findByEmail(username)
@@ -84,6 +92,33 @@ public class AuthServiceImpl implements AuthService {
         }
 
         return modelMapper.map(user, UserDTO.class);
+    }
+
+    @Override
+    public UserDTO loginGoogle(UserDTO userDTO) {
+        try {
+            Optional<User> userOptional = userRepo.findByEmail(userDTO.getEmail());
+            if (userOptional.isPresent()) {
+                return modelMapper.map(userOptional.get(), UserDTO.class);
+            }
+            Role role = roleRepo.findById(AppConstants.USER_ID).get();
+            User user = new User();
+            user.setEmail(userDTO.getEmail());
+            user.setFullName(userDTO.getFullName());
+            user.setAvatar("default.png");
+            user.setLoginType(userDTO.getLoginType());
+            user.setRoles(Set.of(role));
+            user.setEnabled(true);
+            user.setUsername(userDTO.getEmail());
+            user.setPassword(null);
+            User registeredUser = userRepo.save(user);
+
+            return modelMapper.map(registeredUser, UserDTO.class);
+        } catch (Exception e) {
+            throw new APIException("User already exists with emailId: " +
+                    userDTO.getEmail() + e);
+        }
+
     }
 
     @Override

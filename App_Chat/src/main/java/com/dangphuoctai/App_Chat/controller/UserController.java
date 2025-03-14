@@ -146,7 +146,7 @@ public class UserController {
     }
 
     @PutMapping("/public/users/fullName")
-    public ResponseEntity<UserDTO> ResetPassword(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDTO> updateFullName(@RequestBody UserDTO userDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) authentication.getPrincipal();
         String role = (String) jwt.getClaims().get("scope");
